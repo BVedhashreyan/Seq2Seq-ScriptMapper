@@ -1,0 +1,17 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Data and large weights
+data/
+*.pt
+*.pth
+
+# Environments
+.venv/
+env/
+venv/
+
+# Operating System files
+.DS_Store
