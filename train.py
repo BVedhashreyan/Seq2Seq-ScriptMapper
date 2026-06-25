@@ -158,7 +158,14 @@ def run_sweep():
         if val_word_acc > best_val_acc:
             best_val_acc = val_word_acc
 
-            os.makedirs("predictions_vanilla", exist_ok=True)
+            if os.path.exists("/content/drive"):
+                drive_save_dir = "/content/drive/MyDrive/Seq2Seq_Project/predictions_vanilla"
+            else:
+                drive_save_dir = "predictions_vanilla"
+                
+            os.makedirs(drive_save_dir, exist_ok=True)
+            checkpoint_path = os.path.join(drive_save_dir, "best_vanilla_model.pth")
+
             checkpoint = {
                 "epoch": epoch,
 
@@ -180,7 +187,7 @@ def run_sweep():
                     "dropout": config.dropout
                 }
             }
-            torch.save(checkpoint, "predictions_vanilla/best_vanilla_model.pth")
+            torch.save(checkpoint, checkpoint_path)
             print(f"Best Model Saved | Validation Accuracy: {best_val_acc:.4f}")
 
 
