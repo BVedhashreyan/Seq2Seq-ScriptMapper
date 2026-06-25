@@ -4,7 +4,7 @@ import streamlit as st
 import torch
 from torch.utils.data import DataLoader
 
-from src.dataset import CharacterTokenizer, TransliterationDataset, collate_fn
+from utils.dataset import CharacterTokenizer, TransliterationDataset, collate_fn
 
 st.set_page_config(page_title="Telugu Translit Engine", layout="wide")
 st.title("🏹 Telugu Script Mapper: Data & Tokenizer Inspector")

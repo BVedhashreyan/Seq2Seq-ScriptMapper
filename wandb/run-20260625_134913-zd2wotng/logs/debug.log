@@ -1,0 +1,25 @@
+2026-06-25 13:49:13,275 INFO    Thread-8 (_run_job):4584 [wandb_setup.py:_flush():81] Current SDK version is 0.27.0
+2026-06-25 13:49:13,275 INFO    Thread-8 (_run_job):4584 [wandb_setup.py:_flush():81] Configure stats pid to 4584
+2026-06-25 13:49:13,275 INFO    Thread-8 (_run_job):4584 [wandb_setup.py:_flush():81] Loading settings from environment variables
+2026-06-25 13:49:13,276 INFO    Thread-8 (_run_job):4584 [wandb_init.py:setup_run_log_directory():723] Logging user logs to D:\Desktop\Programming\ML\transliteration_seq2seq\wandb\run-20260625_134913-zd2wotng\logs\debug.log
+2026-06-25 13:49:13,276 INFO    Thread-8 (_run_job):4584 [wandb_init.py:setup_run_log_directory():724] Logging internal logs to D:\Desktop\Programming\ML\transliteration_seq2seq\wandb\run-20260625_134913-zd2wotng\logs\debug-internal.log
+2026-06-25 13:49:13,277 INFO    Thread-8 (_run_job):4584 [wandb_init.py:init():851] calling init triggers
+2026-06-25 13:49:13,277 INFO    Thread-8 (_run_job):4584 [wandb_init.py:init():856] wandb.init called with sweep_config: {'cell_type': 'LSTM', 'dropout': 0.2, 'embedding_dim': 128, 'epochs': 5, 'hidden_dim': 256, 'num_layers': 2}
+config: {'_wandb': {}}
+2026-06-25 13:49:13,277 INFO    Thread-8 (_run_job):4584 [wandb_init.py:init():899] starting backend
+2026-06-25 13:49:17,927 INFO    Thread-8 (_run_job):4584 [wandb_init.py:init():914] sending inform_init request
+2026-06-25 13:49:21,693 INFO    Thread-8 (_run_job):4584 [wandb_init.py:init():919] backend started and connected
+2026-06-25 13:49:21,694 INFO    Thread-8 (_run_job):4584 [wandb_run.py:_config_callback():1332] config_cb None None {'cell_type': 'LSTM', 'dropout': 0.2, 'embedding_dim': 128, 'epochs': 5, 'hidden_dim': 256, 'num_layers': 2}
+2026-06-25 13:49:21,695 INFO    Thread-8 (_run_job):4584 [wandb_init.py:init():989] updated telemetry
+2026-06-25 13:49:22,280 INFO    Thread-8 (_run_job):4584 [wandb_init.py:init():1012] communicating run to backend with 90.0 second timeout
+2026-06-25 13:49:23,320 INFO    Thread-8 (_run_job):4584 [wandb_init.py:init():1057] starting run threads in backend
+2026-06-25 13:49:27,213 INFO    Thread-8 (_run_job):4584 [wandb_run.py:_console_start():2509] atexit reg
+2026-06-25 13:49:27,213 INFO    Thread-8 (_run_job):4584 [wandb_run.py:_redirect():2359] redirect: wrap_raw
+2026-06-25 13:49:27,214 INFO    Thread-8 (_run_job):4584 [wandb_run.py:_redirect():2428] Wrapping output streams.
+2026-06-25 13:49:27,214 INFO    Thread-8 (_run_job):4584 [wandb_run.py:_redirect():2451] Redirects installed.
+2026-06-25 13:49:27,220 INFO    Thread-8 (_run_job):4584 [wandb_init.py:init():1095] run started, returning control to user process
+2026-06-25 13:53:18,455 INFO    Thread-8 (_run_job):4584 [wandb_run.py:_finish():2271] finishing run 124111030-nit-kurukshetra/telugu-vanilla-seq2seq/zd2wotng
+2026-06-25 13:53:18,455 INFO    Thread-8 (_run_job):4584 [wandb_run.py:_atexit_cleanup():2476] got exitcode: 1
+2026-06-25 13:53:18,456 INFO    Thread-8 (_run_job):4584 [wandb_run.py:_restore():2458] restore
+2026-06-25 13:53:18,456 INFO    Thread-8 (_run_job):4584 [wandb_run.py:_restore():2464] restore done
+2026-06-25 13:53:21,582 INFO    Thread-8 (_run_job):4584 [wandb_run.py:_footer_sync_info():3877] logging synced files

@@ -61,7 +61,7 @@ class CharacterTokenizer:
             if isinstance(token_id, torch.Tensor):
                 token_id = token_id.item()  
                 
-            char = self.idx2char.get(token_id, "")
+            char = self.idx2char.get(token_id, " ")
             
             if char in self.special_tokens:
                 continue
