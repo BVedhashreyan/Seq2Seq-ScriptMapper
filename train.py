@@ -37,7 +37,7 @@ def train_epoch(model, loader, optimizer, criterion, device):
     epoch_acc = 0
     
     for src, tgt in loader:
-        src, tgt = src.to(device), tgt.to(device)
+        src, tgt = src.to(device, non_blocking = True), tgt.to(device, non_blocking = True)
         
         optimizer.zero_grad()
         output = model(src, tgt, teacher_forcing_ratio=0.5)
@@ -97,8 +97,8 @@ def run_sweep():
     dev_dataset = TransliterationDataset(dev_path, src_tokenizer, tgt_tokenizer)
     
     # loader
-    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, collate_fn=collate_fn)
-    dev_loader = DataLoader(dev_dataset, batch_size=32, shuffle=False, collate_fn=collate_fn)
+    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, collate_fn=collate_fn, num_workers=4, pin_memory=True, persistent_workers=True)
+    dev_loader = DataLoader(dev_dataset, batch_size=32, shuffle=False, collate_fn=collate_fn, num_workers=4, pin_memory=True, persistent_workers=True)
     
     # model intialisation
     encoder = Encoder(len(src_tokenizer.char2idx), config.embedding_dim, config.hidden_dim, config.cell_type, config.num_layers, config.dropout)
