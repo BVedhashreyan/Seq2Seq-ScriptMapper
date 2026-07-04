@@ -44,12 +44,16 @@ class Bahdanau(nn.Module):
         self.U_a = nn.Linear(hidden_dim*2, hidden_dim, bias= False)
         self.V_a = nn.Linear(hidden_dim, 1, bias = False)
 
-    def forward(self, prev_decoder_hidden, encoder_ouputs):
+    def forward(self, prev_decoder_hidden, encoder_ouputs, mask = None):
         dec_proj = self.W_a(prev_decoder_hidden).unsqueeze(1)
         enc_proj = self.U_a(encoder_ouputs)
 
         e = torch.tanh(dec_proj + enc_proj)
         score = self.V_a(e).squeeze(2)
+
+        if mask is not None:
+            score = score.masked_fill(~mask, -1e9)
+            
         return F.softmax(score, dim=1)
 
 class Luong(nn.Module):
@@ -57,12 +61,16 @@ class Luong(nn.Module):
         super().__init__()
         self.W_a = nn.Linear(hidden_dim*2, hidden_dim, bias=False)
 
-    def forward(self, curr_decoder_hidden, encoder_ouputs):
+    def forward(self, curr_decoder_hidden, encoder_ouputs, mask = None):
         enc_proj = self.W_a(encoder_ouputs)
         q = curr_decoder_hidden.unsqueeze(1)
 
         score = torch.bmm(q, enc_proj.transpose(1,2)).squeeze(1)
-        return F.softmax(score, dim = 1)        
+
+        if mask is not None:
+            score = score.masked_fill(~mask, -1e9)
+
+        return F.softmax(score, dim=1)
 
 class Decoder(nn.Module):
     def __init__(self, vocab_size, embedding_dim, hidden_dim, cell_type="LSTM", attention_type="bahdanau", num_layers=1, dropout=0.0):
@@ -89,13 +97,13 @@ class Decoder(nn.Module):
         self.fc_out = nn.Linear(hidden_dim + (hidden_dim * 2) + embedding_dim, vocab_size)
         self.dropout = nn.Dropout(dropout)
         
-    def forward(self, prev_pred, prev_hidden, encoder_outputs):
+    def forward(self, prev_pred, prev_hidden, encoder_outputs, src_mask):
         embedded = self.dropout(self.embedding(prev_pred))
 
         if self.attention_type == "bahdanau":
             st_1 = prev_hidden[0][-1] if self.cell_type == "LSTM" else prev_hidden[-1]
 
-            attn_weights = self.attention(st_1, encoder_outputs)
+            attn_weights = self.attention(st_1, encoder_outputs, src_mask)
             context = torch.bmm(attn_weights.unsqueeze(1), encoder_outputs)
 
             rnn_inp = torch.cat((embedded, context), dim=2)
@@ -107,7 +115,7 @@ class Decoder(nn.Module):
 
             st = hidden[0][-1] if self.cell_type == "LSTM" else hidden[-1]
 
-            attn_weights = self.attention(st, encoder_outputs)
+            attn_weights = self.attention(st, encoder_outputs, src_mask)
             context = torch.bmm(attn_weights.unsqueeze(1), encoder_outputs)
 
         output_projection = torch.cat((ouputs, context, embedded), dim=2).squeeze(1)
@@ -131,10 +139,13 @@ class AttentionSeq2Seq(nn.Module):
         
         encoder_outputs, encoder_hidden = self.encoder(src_batch)
         
+        src_mask = (src_batch != 0)
+
+        decoder_hidden = encoder_hidden
         decoder_input = tgt_batch[:, 0].unsqueeze(1)
         
         for t in range(1, max_len):
-            prediction, hidden, attn_weights = self.decoder(decoder_input, encoder_hidden, encoder_outputs)
+            prediction, decoder_hidden, attn_weights = self.decoder(decoder_input, decoder_hidden, encoder_outputs,src_mask)
             outputs[:, t, :] = prediction
             
             top_prediction = prediction.argmax(1).unsqueeze(1)

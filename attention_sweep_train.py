@@ -200,18 +200,43 @@ def run_sweep():
 
 if __name__ == "__main__":
     sweep_config = {
-        'method': 'bayes', 
-        'metric': {'name': 'val_word_accuracy', 'goal': 'maximize'},
-        'parameters': {
-            'embedding_dim': {'values': [32, 64, 128]},
-            'hidden_dim': {'values': [128, 256, 512]},
-            'cell_type': {'values': ['GRU', 'LSTM']},
-            'attention_type': {'values': ['bahdanau', 'luong']},
-            'num_layers': {'value': 2},
-            'dropout': {'values': [0.1, 0.2]},
-            'epochs': {'value': 5}
+        "method": "bayes",
+        "metric": {
+            "name": "val_word_accuracy",
+            "goal": "maximize"
+        },
+        "parameters": {
+            "embedding_dim": {
+                "values": [64, 128]
+            },
+            "hidden_dim": {
+                "values": [128, 256]
+            },
+            "cell_type": {
+                "value": "LSTM"
+            },
+            "attention_type": {
+                "values": ["bahdanau", "luong"]
+            },
+            "num_layers": {
+                "value": 2
+            },
+            "dropout": {
+                "values": [0.1, 0.2, 0.3]
+            },
+            "epochs": {
+                "value": 10
+            }
         }
     }
-    
-    sweep_id = wandb.sweep(sweep_config, project="telugu-attention-seq2seq")
-    wandb.agent(sweep_id, function=run_sweep, count=10)
+
+    sweep_id = wandb.sweep(
+        sweep_config,
+        project="telugu-attention-seq2seq"
+    )
+
+    wandb.agent(
+        sweep_id,
+        function=run_sweep,
+        count=15
+    )
