@@ -5,9 +5,11 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 import wandb
+import pandas as pd
+import time
 
 from utils.dataset import CharacterTokenizer, TransliterationDataset, collate_fn
-from models.vanilla_seq2seq import Encoder, Decoder, VanillaSeq2Seq
+from models.attention_seq2seq import Encoder, Decoder, AttentionSeq2Seq
 
 # word level (primary metric)
 def calculate_accuracy(model_outputs, target_tensors):
@@ -21,9 +23,9 @@ def calculate_accuracy(model_outputs, target_tensors):
     for p, t in zip(pred_words, true_words):
         match = True
         for char_p, char_t in zip(p, t):
-            if char_t == 0: # pad token , break
+            if char_t == 0:  
                 break
-            if char_p != char_t: # predicted wrong char
+            if char_p != char_t:  
                 match = False
                 break
         if match:
@@ -31,12 +33,12 @@ def calculate_accuracy(model_outputs, target_tensors):
             
     return correct_words / total_words
 
-# character level
+# Character level 
 def calculate_char_accuracy(model_outputs, target_tensors):
-    predictions = model_outputs.argmax(dim = -1)
+    predictions = model_outputs.argmax(dim=-1)
 
     pred_words = predictions[:, 1:]
-    true_words = target_tensors[:,1:]
+    true_words = target_tensors[:, 1:]
 
     correct = 0
     total = 0
@@ -50,7 +52,7 @@ def calculate_char_accuracy(model_outputs, target_tensors):
             if char_p == char_t: 
                 correct += 1
 
-    return correct / total
+    return correct / total if total > 0 else 0.0
 
 def train_epoch(model, loader, optimizer, criterion, device):
     model.train()
@@ -59,13 +61,11 @@ def train_epoch(model, loader, optimizer, criterion, device):
     epoch_char_acc = 0
     
     for src, tgt in loader:
-        src, tgt = src.to(device, non_blocking = True), tgt.to(device, non_blocking = True)
+        src, tgt = src.to(device, non_blocking=True), tgt.to(device, non_blocking=True)
         
         optimizer.zero_grad()
         output = model(src, tgt, teacher_forcing_ratio=0.5)
         
-        # currently o.p - (bs, maxlen, vocab dim) we need to convert to (bs*maxlen, vocab dim) and tgt also to - (bs*maxlen)
-        # tgt only has index at each time step and and op has logits of all vocab at every time step
         output_dim = output.shape[-1]
         loss = criterion(output[:, 1:].reshape(-1, output_dim), tgt[:, 1:].reshape(-1))
         
@@ -76,7 +76,6 @@ def train_epoch(model, loader, optimizer, criterion, device):
         epoch_loss += loss.item()
         epoch_word_acc += calculate_accuracy(output, tgt)
         epoch_char_acc += calculate_char_accuracy(output, tgt)
-
         
     return epoch_loss / len(loader), epoch_word_acc / len(loader), epoch_char_acc / len(loader) 
 
@@ -88,8 +87,8 @@ def validate(model, loader, criterion, device):
     
     with torch.no_grad():
         for src, tgt in loader:
-            src, tgt = src.to(device, non_blocking = True), tgt.to(device, non_blocking = True)
-            output = model(src, tgt, teacher_forcing_ratio=0.0) # no teacher forcing in validation
+            src, tgt = src.to(device, non_blocking=True), tgt.to(device, non_blocking=True)
+            output = model(src, tgt, teacher_forcing_ratio=0.0) 
             
             output_dim = output.shape[-1]
             loss = criterion(output[:, 1:].reshape(-1, output_dim), tgt[:, 1:].reshape(-1))
@@ -101,25 +100,28 @@ def validate(model, loader, criterion, device):
     return epoch_loss / len(loader), epoch_word_acc / len(loader), epoch_char_acc / len(loader) 
 
 def run_final():
+
     # config
     best_config = {
-        "embedding_dim": 64,
-        "hidden_dim": 512,
+        "embedding_dim": 128,
+        "hidden_dim": 256,
         "cell_type": "LSTM",
-        "num_layers": 2,
-        "dropout": 0.4, # 0.2, 0.1 hadhnt worked well 
+        "attention_type": "bahdanau",
+        "num_layers":2,
+        "dropout": 0.3,
+        "epochs":25,
         "learning_rate": 1e-3,
-        "weight_decay": 1e-5, # was overfitting , so added it
-        "epochs": 20
+        "weight_decay": 1e-5,
+        "teacher_forcing_ratio":0.5,
     }
 
     wandb.init(
-        project="telugu-vanilla-seq2seq", 
-        name="final-optimized-vanilla",
+        project="telugu-attention-seq2seq", 
+        name="final-optimized-attention",
         config=best_config
     )
-
     config = wandb.config
+    
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     # paths
@@ -142,83 +144,110 @@ def run_final():
     dev_loader = DataLoader(dev_dataset, batch_size=32, shuffle=False, collate_fn=collate_fn, num_workers=2, pin_memory=True, persistent_workers=True)
     
     # model intialisation
-    encoder = Encoder(len(src_tokenizer.char2idx), config.embedding_dim, config.hidden_dim, config.cell_type, config.num_layers, config.dropout)
-    decoder = Decoder(len(tgt_tokenizer.char2idx), config.embedding_dim, config.hidden_dim, config.cell_type, config.num_layers, config.dropout)
-    model = VanillaSeq2Seq(encoder, decoder).to(device)
+    encoder = Encoder(
+        vocab_size=len(src_tokenizer.char2idx), 
+        embedding_dim=config.embedding_dim, 
+        hidden_dim=config.hidden_dim, 
+        cell_type=config.cell_type, 
+        num_layers=config.num_layers, 
+        dropout=config.dropout
+    )
     
-    # loss, algo
+    decoder = Decoder(
+        vocab_size=len(tgt_tokenizer.char2idx), 
+        embedding_dim=config.embedding_dim, 
+        hidden_dim=config.hidden_dim, 
+        cell_type=config.cell_type, 
+        attention_type=config.attention_type,  # Sweeps will explore 'bahdanau' or 'luong'
+        num_layers=config.num_layers, 
+        dropout=config.dropout
+    )
+    
+    model = AttentionSeq2Seq(encoder, decoder).to(device)
+    
+    #loss,algo,scheduler
     optimizer = optim.Adam(model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay)
-    criterion = nn.CrossEntropyLoss(ignore_index=0)
-    
-    # tracking
-    best_val_loss = float('inf')
-    patience = 3
-    patience_counter = 0
+    criterion = nn.CrossEntropyLoss(ignore_index=0) # Ignoring <pad> elements (index 0)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="max",factor=0.5, patience=2)
 
+    # track
+    best_val_acc = -1.0
+    patience = 5
+    patience_counter = 0
+    best_epoch = -1
+
+    # print config
+    print("*" * 60)
+    print(" Final Attention Configuration")
+    print(best_config)
+    print("*" * 60)
+
+    start_time = time.time()
     for epoch in range(config.epochs):
         train_loss, train_word_acc, train_char_acc = train_epoch(model, train_loader, optimizer, criterion, device)
         val_loss, val_word_acc, val_char_acc = validate(model, dev_loader, criterion, device)
-        
+
         wandb.log({
             "epoch": epoch,
-
             "train_loss": train_loss,
             "train_word_accuracy": train_word_acc,
             "train_char_accuracy": train_char_acc,
-
             "val_loss": val_loss,
             "val_word_accuracy": val_word_acc,
-            "val_char_accuracy": val_char_acc
+            "val_char_accuracy": val_char_acc,
+            "learning_rate": optimizer.param_groups[0]["lr"]
         })
         print(f"Epoch {epoch+1:02d} | Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f} | Val Word Acc: {val_word_acc:.4f}")
 
+        scheduler.step(val_word_acc)
+        
         # early stopping
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
+        if val_word_acc > best_val_acc:
+            best_val_acc = val_word_acc
             patience_counter = 0
-            
+            best_epoch = epoch+1
+
             if os.path.exists("/content/drive"):
-                drive_save_dir = "/content/drive/MyDrive/Seq2Seq_Project/predictions_vanilla"
+                drive_save_dir = "/content/drive/MyDrive/Seq2Seq_Project/predictions_attention"
             else:
-                drive_save_dir = "predictions_vanilla"
+                drive_save_dir = "predictions_attention"
                 
             os.makedirs(drive_save_dir, exist_ok=True)
-            checkpoint_path = os.path.join(drive_save_dir, "best_vanilla_model.pth")
+            checkpoint_path = os.path.join(drive_save_dir, "best_attention_model.pth")
 
             checkpoint = {
                 "epoch": epoch,
+                "best_val_accuracy": best_val_acc,
 
-                "best_val_loss": best_val_loss,
+                "val_loss": val_loss,
+                "val_word_accuracy": val_word_acc,
+                "val_char_accuracy": val_char_acc,
 
                 "encoder_state": encoder.state_dict(),
                 "decoder_state": decoder.state_dict(),
-
                 "optimizer_state": optimizer.state_dict(),
 
                 "src_vocab": src_tokenizer.char2idx,
                 "tgt_vocab": tgt_tokenizer.char2idx,
 
-                "config": {
-                    "embedding_dim": config.embedding_dim,
-                    "hidden_dim": config.hidden_dim,
-                    "cell_type": config.cell_type,
-                    "num_layers": config.num_layers,
-                    "dropout": config.dropout
-                }
+                "config": best_config,
+                "learning_rate": optimizer.param_groups[0]["lr"]
             }
             torch.save(checkpoint, checkpoint_path)
-            print("Val_loss imporved , checkpoint saved.")
+            print(f"Best Attention Model Saved | Validation Accuracy: {best_val_acc:.4f}")
         else:
             patience_counter += 1
-            print(f"Val loss did not improve. Early stopping : {patience_counter}/{patience}")
+            print(f"Val acc did not improve. Early stopping : {patience_counter}/{patience}")
             
         if patience_counter >= patience:
             print("Early stopping. Terminating run.")
             break
-    
+
+    training_time = time.time() - start_time
+    wandb.run.summary["training_time_minutes"] = training_time / 60
+    wandb.run.summary["best_val_word_accuracy"] = best_val_acc
+    wandb.run.summary["best_epoch"] = best_epoch
     wandb.finish()
 
-
 if __name__ == "__main__":
-    import pandas as pd
     run_final()
