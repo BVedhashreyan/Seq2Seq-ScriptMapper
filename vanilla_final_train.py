@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 import wandb
-
+import time
 from utils.dataset import CharacterTokenizer, TransliterationDataset, collate_fn
 from models.vanilla_seq2seq import Encoder, Decoder, VanillaSeq2Seq
 
@@ -149,12 +149,15 @@ def run_final():
     # loss, algo
     optimizer = optim.Adam(model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay)
     criterion = nn.CrossEntropyLoss(ignore_index=0)
-    
-    # tracking
-    best_val_loss = float('inf')
-    patience = 3
-    patience_counter = 0
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="max",factor=0.5, patience=2)
 
+    # tracking
+    best_val_acc = -1
+    patience = 5
+    patience_counter = 0
+    best_epoch = -1
+
+    start_time = time.time()
     for epoch in range(config.epochs):
         train_loss, train_word_acc, train_char_acc = train_epoch(model, train_loader, optimizer, criterion, device)
         val_loss, val_word_acc, val_char_acc = validate(model, dev_loader, criterion, device)
@@ -168,14 +171,17 @@ def run_final():
 
             "val_loss": val_loss,
             "val_word_accuracy": val_word_acc,
-            "val_char_accuracy": val_char_acc
+            "val_char_accuracy": val_char_acc,
+            "learning_rate": optimizer.param_groups[0]["lr"]
         })
         print(f"Epoch {epoch+1:02d} | Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f} | Val Word Acc: {val_word_acc:.4f}")
+        scheduler.step(val_word_acc)
 
         # early stopping
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
+        if val_word_acc > best_val_acc:
+            best_val_acc = val_word_acc
             patience_counter = 0
+            best_epoch = epoch+1
             
             if os.path.exists("/content/drive"):
                 drive_save_dir = "/content/drive/MyDrive/Seq2Seq_Project/predictions_vanilla"
@@ -188,7 +194,7 @@ def run_final():
             checkpoint = {
                 "epoch": epoch,
 
-                "best_val_loss": best_val_loss,
+                "best_val_accuracy": best_val_acc,
 
                 "encoder_state": encoder.state_dict(),
                 "decoder_state": decoder.state_dict(),
@@ -198,24 +204,23 @@ def run_final():
                 "src_vocab": src_tokenizer.char2idx,
                 "tgt_vocab": tgt_tokenizer.char2idx,
 
-                "config": {
-                    "embedding_dim": config.embedding_dim,
-                    "hidden_dim": config.hidden_dim,
-                    "cell_type": config.cell_type,
-                    "num_layers": config.num_layers,
-                    "dropout": config.dropout
-                }
+                "config": best_config,
+                "learning_rate": optimizer.param_groups[0]["lr"]
             }
             torch.save(checkpoint, checkpoint_path)
             print("Val_loss imporved , checkpoint saved.")
         else:
             patience_counter += 1
-            print(f"Val loss did not improve. Early stopping : {patience_counter}/{patience}")
+            print(f"Val acc did not improve. Early stopping : {patience_counter}/{patience}")
             
         if patience_counter >= patience:
             print("Early stopping. Terminating run.")
             break
-    
+        
+    training_time = time.time() - start_time
+    wandb.run.summary["training_time_minutes"] = training_time / 60
+    wandb.run.summary["best_val_word_accuracy"] = best_val_acc
+    wandb.run.summary["best_epoch"] = best_epoch
     wandb.finish()
 
 

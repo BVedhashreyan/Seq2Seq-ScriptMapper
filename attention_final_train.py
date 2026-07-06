@@ -108,10 +108,10 @@ def run_final():
         "cell_type": "LSTM",
         "attention_type": "bahdanau",
         "num_layers":2,
-        "dropout": 0.3,
+        "dropout": 0.4,
         "epochs":25,
         "learning_rate": 1e-3,
-        "weight_decay": 1e-5,
+        "weight_decay": 5e-5,
         "teacher_forcing_ratio":0.5,
     }
 
@@ -167,7 +167,7 @@ def run_final():
     
     #loss,algo,scheduler
     optimizer = optim.Adam(model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay)
-    criterion = nn.CrossEntropyLoss(ignore_index=0) # Ignoring <pad> elements (index 0)
+    criterion = nn.CrossEntropyLoss(ignore_index=0, label_smoothing=0.1) # Ignoring <pad> 
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="max",factor=0.5, patience=2)
 
     # track
