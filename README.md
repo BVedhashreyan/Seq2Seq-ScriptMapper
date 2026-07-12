@@ -150,8 +150,6 @@ The Attention Seq2Seq model was tuned separately over attention mechanism, model
 
 The initial sweep broadly explored recurrent cell type, network depth, embedding dimension, hidden dimension, and dropout.
 
-![Vanilla Seq2Seq Initial Sweep]
-
 ### Vanilla Seq2Seq — Refined Sweep
 
 | Hyperparameter          | Values                   |
@@ -326,9 +324,7 @@ Train / Validation / Test Sets
         ▼
 Progressive Hyperparameter Sweeps
         │
-        ├── Vanilla Initial Sweep
-        │
-        ├── Vanilla Refined Sweep
+        ├── Vanilla Sweep
         │
         └── Attention Sweep
         │
@@ -394,7 +390,6 @@ transliteration_seq2seq/
 │   └── dakshina_dataset_v1.0/
 │
 ├── assets/
-│   ├── vanilla_sweep_1.png
 │   ├── vanilla_sweep_2.png
 │   ├── attention_sweep.png
 │   └── streamlit_demo.png
@@ -425,7 +420,7 @@ transliteration_seq2seq/
 Clone the repository:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/BVedhashreyan/telugu-transliteration-seq2seq
 cd transliteration_seq2seq
 ```
 
@@ -557,9 +552,9 @@ This project uses the Telugu transliteration lexicons from the **Dakshina Datase
 
 ## Author
 
-**Vedhashreyan B**
+**Vedhashreyan Brahmadevara**
 
-B.Tech Robotics and Automation
+B.Tech Robotics and Automation, 
 National Institute of Technology Kurukshetra
 
 ---
