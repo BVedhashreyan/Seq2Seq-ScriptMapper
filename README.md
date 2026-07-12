@@ -273,7 +273,7 @@ Features include:
 
 ### Application Preview
 
-[!Application Preview](assets/streamlit.png)
+![Application Preview](assets/streamlit.png)
 Run the application with:
 
 ```bash
