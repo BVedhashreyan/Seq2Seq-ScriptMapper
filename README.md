@@ -259,9 +259,7 @@ attention_heatmaps/
 
 Add 2–4 representative heatmaps here.
 
-```markdown
-(attention_heatmaps/calendar_attention.png)
-```
+[!Example Attention Alignments](attention_heatmaps/calendar_attention.png)
 
 ---
 
