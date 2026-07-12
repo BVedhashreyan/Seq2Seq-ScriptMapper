@@ -150,7 +150,7 @@ The Attention Seq2Seq model was tuned separately over attention mechanism, model
 
 The initial sweep broadly explored recurrent cell type, network depth, embedding dimension, hidden dimension, and dropout.
 
-![Vanilla Seq2Seq Initial Sweep](assets/vanilla_sweep_1.png)
+![Vanilla Seq2Seq Initial Sweep]
 
 ### Vanilla Seq2Seq — Refined Sweep
 
@@ -260,10 +260,7 @@ attention_heatmaps/
 Add 2–4 representative heatmaps here.
 
 ```markdown
-<p align="center">
-  <img src="attention_heatmaps/example_1.png" width="45%" />
-  <img src="attention_heatmaps/example_2.png" width="45%" />
-</p>
+(attention_heatmaps/calendar_attention.png)
 ```
 
 ---
