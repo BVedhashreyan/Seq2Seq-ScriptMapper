@@ -255,12 +255,6 @@ Generated visualizations are stored in:
 attention_heatmaps/
 ```
 
-### Example Attention Alignments
-
-Add 2–4 representative heatmaps here.
-
-[!Example Attention Alignments](attention_heatmaps/calendar_attention.png)
-
 ---
 
 ## Interactive Streamlit Demo
@@ -279,12 +273,7 @@ Features include:
 
 ### Application Preview
 
-```markdown
-<p align="center">
-  <img src="assets/streamlit_demo.png" width="85%" />
-</p>
-```
-
+[!Application Preview](assets/streamlit.png)
 Run the application with:
 
 ```bash

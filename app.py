@@ -133,7 +133,7 @@ def plot_attention(src, predictions, attention, src_tokenizer, tgt_tokenizer):
 
 st.set_page_config(page_title="Telugu Transliteration", page_icon="🔤")
 
-st.title("Romanized Telugu Transliteration")
+st.title("Telugu Translit")
 st.write("Character-level transliteration using Vanilla Seq2Seq and Attention Seq2Seq models.")
 
 model_choice = st.selectbox(
