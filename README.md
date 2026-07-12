@@ -421,7 +421,7 @@ Clone the repository:
 
 ```bash
 git clone https://github.com/BVedhashreyan/telugu-transliteration-seq2seq
-cd transliteration_seq2seq
+cd telugu-transliteration-seq2seq
 ```
 
 Create and activate a virtual environment:
