@@ -1,7 +1,6 @@
 import torch
 
 def levenshtein_distance(s1, s2):
-    """Calculates the minimum edit distance between two strings."""
     if len(s1) < len(s2):
         return levenshtein_distance(s2, s1)
     if len(s2) == 0:
@@ -21,10 +20,6 @@ def levenshtein_distance(s1, s2):
 
 
 def calculate_metrics(pred_strings, true_strings):
-    """
-    Computes exact Word Accuracy, Character Accuracy, and CER 
-    over collections of decoded native text strings.
-    """
     correct_words = 0
     total_words = len(true_strings)
     

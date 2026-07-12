@@ -60,10 +60,11 @@ class CharacterTokenizer:
         for token_id in ids:
             if isinstance(token_id, torch.Tensor):
                 token_id = token_id.item()  
-                
             char = self.idx2char.get(token_id, " ")
             
-            if char in self.special_tokens:
+            if char == self.eos_token:
+                break
+            if char == self.pad_token or char == self.sos_token:
                 continue
             chars.append(char)
             

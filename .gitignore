@@ -16,3 +16,6 @@ venv/
 
 # Operating System files
 .DS_Store
+
+#app
+app2.py
